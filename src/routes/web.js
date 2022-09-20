@@ -1,17 +1,19 @@
-const { Router, response} = require('express');
-const {getHomePage} = require('../controllers/homepageController');
-const {getWebHook, postWebHook} = require('../controllers/chatBotController');
-const router = Router();
+import express  from "express";
+import chatBotController from "../controllers/chatBotController";
+import homepageController from "../controllers/homepageController";
 
-let initWebRoutes = (app) => {
-    router.get('/', getHomePage);
-    router.get('/webhook', getWebHook);
-    router.post('/webhook', postWebHook);
+let router = express.Router();
 
-    return app.use('/', router);
+let initWebRoutes = (app)=> {
+/*    router.get("/", (req, res) => {
+        return res.send("Hello world!");
+    });
+*/
+    router.get("/", homepageController.getHomePage);
+    router.get("/webhook", chatBotController.getWebhook);
+    router.post("/webhook", chatBotController.postWebhook);
+
+    return app.use("/", router);
 }
-
-
-
 
 module.exports = initWebRoutes;
