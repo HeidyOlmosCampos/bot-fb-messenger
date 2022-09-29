@@ -7,7 +7,7 @@ const { structProtoToJson } = require("../helpers/structFunctions");
 
 //mongodb models
 
-const User = require("../models/user");
+const User = require("../models/user.js");
 const Product = require('../models/product');
 
 
