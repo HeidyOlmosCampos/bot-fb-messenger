@@ -5,6 +5,11 @@ const uuid = require("uuid");
 const dialogflow = require('./dialogFlowController');
 const { structProtoToJson } = require("../helpers/structFunctions");
 
+//mongodb models
+
+const User = require("../models/user");
+const Product = require('../models/product');
+
 
 const MY_VERIFY_TOKEN = process.env.MY_VERIFY_FB_TOKEN;
 
@@ -49,10 +54,10 @@ const postWebHook = (req, res) => {
       // }
       entry.messaging.forEach(function (messagingEvent) {
         if (messagingEvent.message) {
-          console.log("entrando a received message");
+          // console.log("entrando a received message");
           receivedMessage(messagingEvent);
         } else if (messagingEvent.postback) {
-          console.log("recive postback..........");
+          // console.log("recive postback..........");
           receivedPostback(messagingEvent);
         } else {
           console.log(
@@ -114,6 +119,9 @@ async function receivedMessage(event) {
     return;
   }
 
+  saveUserData(senderId);
+
+
   if (messageText) {
     //send message to api.ai
     console.log("se recibio este mensaje: ", messageText);
@@ -121,6 +129,27 @@ async function receivedMessage(event) {
   } else if (messageAttachments) {
     handleMessageAttachments(messageAttachments, senderId);
   }
+}
+
+async function saveUserData(facebookId) {
+
+  const existeUser = await User.findOne({ facebookId });
+  if (existeUser) {
+    return;
+  }
+  let userData = await getUserData(facebookId);
+  if (userData.first_name == "" || userData.last_name == "") return;
+  let user = new User({
+    firstName: userData.first_name,
+    lastName: userData.last_name,
+    facebookId,
+    profilePic: userData.profile_pic,
+  });
+
+  user.save((err, res) => {
+    if (err) return console.log(err);
+    console.log("Se creo un usuario: ", res);
+  });
 }
 
 async function receivedPostback(event) {
@@ -162,7 +191,7 @@ async function handleQuickReply(senderId, quickReply, messageId) {
   sendToDialogFlow(senderId, quickReplyPayload);
 }
 
-function handleDialogFlowAction(
+async function handleDialogFlowAction(
   sender,
   action,
   messages,
@@ -170,6 +199,12 @@ function handleDialogFlowAction(
   parameters
 ) {
   switch (action) {
+    case "tipopolera.action":
+      console.log(parameters);
+      let category = parameters.fields.tipoPolera.stringValue;
+      let poleras = await Product.find({ category });
+      console.log(poleras);
+      break;
     default:
       //unhandled action, just send back the text
       handleMessages(messages, sender);
